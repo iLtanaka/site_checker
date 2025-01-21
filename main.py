@@ -4,6 +4,7 @@ import string
 import itertools
 import time
 import os
+from bs4 import BeautifulSoup
 
 def generate_links(characters, length):
     for chars in itertools.product(characters, repeat=length):
@@ -14,14 +15,26 @@ def check_link(base_url, subdomain):
     try:
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
-            return True
+            title = extract_title(response.text)
+            return True, title  
         elif response.status_code == 404:
-            return False
-    except requests.RequestException:
-        return False
+            return False, None  
+        else:
+            return False, None  
+    except requests.RequestException as e:
+        print(f"Ошибка запроса для URL")
+        return False, None  
+
+def extract_title(html):
+    try:
+        soup = BeautifulSoup(html, 'html.parser')
+        title = soup.title.string if soup.title else "Нет заголовка"
+        return title.strip()
+    except Exception as e:
+        return f"Ошибка при извлечении заголовка: {e}"
 
 def main():
-    parser = argparse.ArgumentParser(description="Скрипт для проверки субдоменов.")
+    parser = argparse.ArgumentParser(description="Скрипт для проверки субдоменов и извлечения заголовков.")
     parser.add_argument(
         "--base-url",
         type=str,
@@ -33,7 +46,7 @@ def main():
     base_url = args.base_url
     characters = string.ascii_lowercase + string.digits
     progress_file = "progress.txt"
-    output_file = "working_links.txt"
+    output_file = "working_links_with_titles.txt"
 
     current_length = 1
     start_from = None
@@ -54,17 +67,16 @@ def main():
             found = True
 
             print(f"Проверка: https://{subdomain}.{base_url}/")
-            if check_link(base_url, subdomain):
-                print(f"[+] Найдена рабочая ссылка: https://{subdomain}.{base_url}/")
+            is_working, title = check_link(base_url, subdomain)
+            if is_working:
+                print(f"[+] Найдена рабочая ссылка: https://{subdomain}.{base_url}/, Заголовок: {title}")
                 with open(output_file, "a") as f:
-                    f.write(f"https://{subdomain}.{base_url}/\n")
+                    f.write(f"https://{subdomain}.{base_url}/ - {title}\n")
             else:
                 print(f"[-] Ссылка не найдена: https://{subdomain}.{base_url}/")
 
             with open(progress_file, "w") as f:
                 f.write(f"{current_length}:{subdomain}")
-
-            time.sleep(0.5)
 
         print(f"Проверка для длины {current_length} завершена.")
         current_length += 1
