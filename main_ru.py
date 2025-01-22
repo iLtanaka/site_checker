@@ -25,18 +25,18 @@ async def check_link(session, base_url, subdomain):
 def extract_title(html):
     try:
         soup = BeautifulSoup(html, 'html.parser')
-        title = soup.title.string if soup.title else "No Title"
+        title = soup.title.string if soup.title else "Нет заголовка"
         return title.strip()
     except Exception:
-        return "Error Extracting Title"
+        return "Ошибка при извлечении заголовка"
 
 async def main():
-    parser = argparse.ArgumentParser(description="Script for checking subdomains and extracting titles.")
+    parser = argparse.ArgumentParser(description="Скрипт для проверки субдоменов и извлечения заголовков.")
     parser.add_argument(
         "--base-url",
         type=str,
         default="narod.ru",
-        help="Base URL to check subdomains (default: narod.ru)"
+        help="Базовый URL для проверки субдоменов (по умолчанию: narod.ru)"
     )
     args = parser.parse_args()
 
@@ -55,7 +55,7 @@ async def main():
 
     async with aiohttp.ClientSession() as session:
         while True:
-            print(f"\nStarting checks for length {current_length}")
+            print(f"\nНачало проверки для длины {current_length}")
             found = False
             tasks = []
 
@@ -72,7 +72,7 @@ async def main():
                     results = await asyncio.gather(*tasks)
                     for url, title in results:
                         if url:
-                            print(f"[+] Found working link: {url}, Title: {title}")
+                            print(f"[+] Найдена рабочая ссылка: {url}, Заголовок: {title}")
                             with open(output_file, "a") as f:
                                 f.write(f"{url} - {title}\n")
                     tasks = []
@@ -80,11 +80,11 @@ async def main():
             results = await asyncio.gather(*tasks)
             for url, title in results:
                 if url:
-                    print(f"[+] Found working link: {url}, Title: {title}")
+                    print(f"[+] Найдена рабочая ссылка: {url}, Заголовок: {title}")
                     with open(output_file, "a") as f:
                         f.write(f"{url} - {title}\n")
 
-            print(f"Check for length {current_length} completed.")
+            print(f"Проверка для длины {current_length} завершена.")
             current_length += 1
             start_from = None
 

@@ -1,68 +1,62 @@
 # Site Checker
 
-Скрипт для автоматической проверки субдоменов на существование на основе базового URL. Скрипт генерирует все возможные комбинации субдоменов заданной длины, проверяет доступность каждого из них и записывает рабочие ссылки в файл.
+[🇷🇺 Читать на русском](README_RU.md)
 
-## Описание
+A script for automated subdomain existence checking based on a base URL. The script generates all possible subdomain combinations of a given length, checks their availability, and logs working links to a file.
 
-Этот скрипт использует метод грубой силы для проверки существования субдоменов для заданного базового URL. Он генерирует все возможные комбинации символов для каждого уровня субдоменов и проверяет их на доступность, используя HTTP-запросы.
+## Description
 
-### Возможности:
-- Проверка доступности субдоменов.
-- Генерация субдоменов из латинских букв и цифр.
-- Продолжение проверки с того места, где скрипт был остановлен (сохраняет состояние в файл `progress.txt`).
-- Запись рабочих субдоменов в файл `working_links_with_titles.txt`.
+This script uses a brute-force method to check for subdomain existence for a given base URL. It generates all possible character combinations for each subdomain level and checks their availability using HTTP requests.
 
-## Требования
+### Features:
+- Subdomain availability checking.
+- Subdomain generation using Latin letters and digits.
+- Resumes checking from the last stopped point (saves state to `progress.txt`).
+- Logs working subdomains to `working_links_with_titles.txt`.
+
+## Requirements
 
 - Python 3.x
-- Библиотеки:
+- Libraries:
   - `requests`
   - `argparse`
   - `BeautifulSoup4`
   - `aiohttp`
 
-## Установка
+## Installation
 
-1. Клонируйте репозиторий:
+1. Clone the repository:
     ```bash
     git clone https://github.com/yourusername/site_checker.git
     cd site_checker
     ```
 
-2. Установите зависимости:
+2. Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
 
-## Использование
+## Usage
 
-Запустите скрипт с нужными параметрами. Если не указать параметр `--base-url`, будет использован URL по умолчанию (`narod.ru`).
+Run the script with the required parameters. If the `--base-url` parameter is not specified, the default URL (`narod.ru`) will be used.
 
-### Пример:
+### Example:
+``bash
+python main.py --base-url example.com
+```
+### Parameters:
+`--base-url` - Base URL for subdomain checking. Default is narod.ru.
+### Working Files:
+`progress.txt` - Contains the current execution progress to resume from where the script was interrupted.
+`working_links_with_titles.txt` - File to store working subdomains.
+Example Output:
 ```bash
-python site_checker.py --base-url example.com
-```
-
-### Параметры:
-- `--base-url`: Базовый URL для проверки субдоменов. По умолчанию — `narod.ru`.
-
-### Рабочие файлы:
-- `progress.txt`: Содержит информацию о текущем месте выполнения скрипта, чтобы продолжить с того места, где был прерван.
-- `working_links_with_titles.txt`: Файл, в который записываются рабочие субдомены.
-
-## Пример работы скрипта:
-
-```
-Начало проверки для длины 5
-[+] Найдена рабочая ссылка: https://aaaaa.narod.ru/, Заголовок: example
-[+] Найдена рабочая ссылка: https://bbbbb.narod.ru/, Заголовок: bbbbb
+Starting checks for length 5
+[+] Found working link: https://aaaaa.narod.ru/, Title: example
+[+] Found working link: https://bbbbb.narod.ru/, Title: bbbbb
 ...
 ```
-
-## Примечания
-
-- Скрипт использует стратегию "грубой силы", генерируя все возможные комбинации букв и цифр для субдоменов заданной длины. С каждым запуском длина субдоменов увеличивается.
-
-## Лицензия
-
-Этот проект лицензирован под  GPLv3. См. файл [LICENSE](LICENSE) для подробностей.
+## Notes
+The script uses a brute-force strategy, generating all possible combinations of letters and digits for subdomains of a given length. Each run increments the subdomain length.
+## License
+This project is licensed under GPLv3. See the [LICENSE](LICENSE) file for details.
