@@ -1,8 +1,8 @@
 import argparse
-import requests
+import asyncio
+import aiohttp
 import string
 import itertools
-import time
 import os
 from bs4 import BeautifulSoup
 
@@ -10,30 +10,27 @@ def generate_links(characters, length):
     for chars in itertools.product(characters, repeat=length):
         yield ''.join(chars)
 
-def check_link(base_url, subdomain):
+async def check_link(session, base_url, subdomain):
     url = f"https://{subdomain}.{base_url}/"
     try:
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            title = extract_title(response.text)
-            return True, title  
-        elif response.status_code == 404:
-            return False, None  
-        else:
-            return False, None  
-    except requests.RequestException as e:
-        print(f"Ошибка запроса для URL")
-        return False, None  
+        async with session.get(url, timeout=5) as response:
+            if response.status == 200:
+                html = await response.text()
+                title = extract_title(html)
+                return url, title
+            return None, None
+    except Exception:
+        return None, None
 
 def extract_title(html):
     try:
         soup = BeautifulSoup(html, 'html.parser')
         title = soup.title.string if soup.title else "Нет заголовка"
         return title.strip()
-    except Exception as e:
-        return f"Ошибка при извлечении заголовка: {e}"
+    except Exception:
+        return "Ошибка при извлечении заголовка"
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(description="Скрипт для проверки субдоменов и извлечения заголовков.")
     parser.add_argument(
         "--base-url",
@@ -56,31 +53,41 @@ def main():
             current_length = int(data[0])
             start_from = data[1] if len(data) > 1 else None
 
-    while True:
-        print(f"\nНачало проверки для длины {current_length}")
-        found = False
-        for subdomain in generate_links(characters, current_length):
-            if start_from and not found:
-                if subdomain == start_from:
-                    found = True
-                continue
-            found = True
+    async with aiohttp.ClientSession() as session:
+        while True:
+            print(f"\nНачало проверки для длины {current_length}")
+            found = False
+            tasks = []
 
-            print(f"Проверка: https://{subdomain}.{base_url}/")
-            is_working, title = check_link(base_url, subdomain)
-            if is_working:
-                print(f"[+] Найдена рабочая ссылка: https://{subdomain}.{base_url}/, Заголовок: {title}")
-                with open(output_file, "a") as f:
-                    f.write(f"https://{subdomain}.{base_url}/ - {title}\n")
-            else:
-                print(f"[-] Ссылка не найдена: https://{subdomain}.{base_url}/")
+            for subdomain in generate_links(characters, current_length):
+                if start_from and not found:
+                    if subdomain == start_from:
+                        found = True
+                    continue
+                found = True
 
-            with open(progress_file, "w") as f:
-                f.write(f"{current_length}:{subdomain}")
+                tasks.append(check_link(session, base_url, subdomain))
 
-        print(f"Проверка для длины {current_length} завершена.")
-        current_length += 1
-        start_from = None
+                if len(tasks) >= 100:  # Запускаем обработку батчами
+                    results = await asyncio.gather(*tasks)
+                    for url, title in results:
+                        if url:
+                            print(f"[+] Найдена рабочая ссылка: {url}, Заголовок: {title}")
+                            with open(output_file, "a") as f:
+                                f.write(f"{url} - {title}\n")
+                    tasks = []
+
+            # Обработка оставшихся задач
+            results = await asyncio.gather(*tasks)
+            for url, title in results:
+                if url:
+                    print(f"[+] Найдена рабочая ссылка: {url}, Заголовок: {title}")
+                    with open(output_file, "a") as f:
+                        f.write(f"{url} - {title}\n")
+
+            print(f"Проверка для длины {current_length} завершена.")
+            current_length += 1
+            start_from = None
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
