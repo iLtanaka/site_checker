@@ -68,7 +68,7 @@ async def main():
 
                 tasks.append(check_link(session, base_url, subdomain))
 
-                if len(tasks) >= 100:  # Запускаем обработку батчами
+                if len(tasks) >= 100:
                     results = await asyncio.gather(*tasks)
                     for url, title in results:
                         if url:
@@ -77,7 +77,6 @@ async def main():
                                 f.write(f"{url} - {title}\n")
                     tasks = []
 
-            # Обработка оставшихся задач
             results = await asyncio.gather(*tasks)
             for url, title in results:
                 if url:
